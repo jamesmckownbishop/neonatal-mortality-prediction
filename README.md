@@ -4,9 +4,9 @@ This project uses public births data to predict neonatal mortality. The scripts 
 
 Neonatal Mortality Data Preparation - downloads, cleans, and pickles the data; 6 minutes
 
-Neonatal Mortality Data Analysis - runs XGBoost with validation and hyperoptimization; 12.7 hours
+Neonatal Mortality Data Analysis - runs XGBoost with validation and hyperoptimization on 2016 data; 12.7 hours
 
-Neonatal Mortality Final Test - runs and describes the results of the hyperoptimized models; 20 minutes
+Neonatal Mortality Final Test - runs and describes the results of the hyperoptimized models on 2015 data; 20 minutes
 
 Neonatal Mortality Predictor App - predicts mortality given user input
 
