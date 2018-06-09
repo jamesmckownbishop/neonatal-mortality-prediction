@@ -24,7 +24,7 @@ The data analysis and final test scripts require Python packages ```hyperopt``` 
 
 2) Download this repository to a folder
 
-3) Replace each instance of ```~path\``` in the following with the folder path
+3) Replace each instance of ```~path\``` in the following commands with the folder path
 
 ```
 conda create -n py36_nmp python=3.6.5
@@ -45,7 +45,7 @@ python "~path\Neonatal Mortality Final Test.py"
 python "~path\Neonatal Mortality Predictor App.py"
 ```
 
-4) Enter the desired commands at a command prompt
+4) Enter the desired commands among those above at a command prompt
 - To replicate the analysis, enter all commands (takes about 9.5 hours to complete on Intel i7-6700 with 16GB RAM)
 - To skip the analysis and start the app, skip the commands ```pip install msgpack``` through ```python "~path\Neonatal Mortality Final Test.py"```
 
