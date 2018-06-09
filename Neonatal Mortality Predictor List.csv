@@ -1,4 +1,4 @@
-feature,dtype,pre_birth
+feature,dtype,prenatal
 dmar,category,1
 sex,category,1
 mbstate_rec,category,1
@@ -102,6 +102,6 @@ apgar5,category,
 apgar10,category,
 dbwt,float,
 dob_tt,float,
-ilive,category,
+ilive,category,1
 mrace31,category,1
 frace31,category,1
