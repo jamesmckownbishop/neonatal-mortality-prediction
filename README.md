@@ -24,7 +24,7 @@ The data analysis and final test scripts require Python packages ```hyperopt``` 
 
 2) Download this repository to a folder
 
-3) Replace each instance of "~path" in the following with the folder path
+3) Replace each instance of ```~path\``` in the following with the folder path
 
 ```
 conda create -n py36_nmp python=3.6.5 -vv
