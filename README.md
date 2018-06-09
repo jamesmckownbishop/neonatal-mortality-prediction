@@ -27,7 +27,7 @@ The data analysis and final test scripts require Python packages ```hyperopt``` 
 3) Replace each instance of ```~path\``` in the following with the folder path
 
 ```
-conda create -n py36_nmp python=3.6.5 -vv
+conda create -n py36_nmp python=3.6.5
 activate py36_nmp
 
 conda install py-xgboost
