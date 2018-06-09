@@ -12,7 +12,7 @@ This project uses public births data to predict neonatal mortality. The scripts 
 
 ```Neonatal Mortality Predictor List.csv``` is a necessary input file for the latter three scripts that lists the predictors used, their data types, and whether they are included in the prenatal model
 
-```Full 2016 Target Mean Encodings``` is a necessary input file for the predictor app that stores the target mean encodings for features treated as categorical
+```Full 2016 Target Mean Encodings.p``` is a necessary input file for the predictor app that stores the target mean encodings for features treated as categorical
 
 ```Prenatal Model.p``` and ```Prenatal Quantiles.p``` are necessary input files for the predictor app that store the prenatal prediction model and its predicted mortality probability quantiles on the training set, respectively
 
