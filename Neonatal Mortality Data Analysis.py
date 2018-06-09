@@ -10,8 +10,6 @@ import sklearn.metrics
 import xgboost
 from hyperopt import fmin, tpe, hp
 
-# Run time: 32740.427926301956 seconds
-
 start_time = time()
 
 os.chdir(os.path.dirname(__file__))

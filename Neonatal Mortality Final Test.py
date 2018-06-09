@@ -8,8 +8,6 @@ from scipy.stats import norm
 
 import xgboost
 
-# Run time: 253.6763687133789 seconds
-
 start_time = time()
 
 os.chdir(os.path.dirname(__file__))
