@@ -3,17 +3,18 @@ import pickle
 import pandas as pd
 import numpy as np
 from time import time
-
-from sklearn.model_selection import train_test_split
 import sklearn.metrics
-import matplotlib.pyplot as plt
+from scipy.stats import norm
+
 import xgboost
+
+# Run time: 253.6763687133789 seconds
 
 start_time = time()
 
 os.chdir(os.path.dirname(__file__))
 
-def train_final_model(params, X, y):
+def train_final_model(params, train, valid, outcome='ilive'):
     params.update({
                    'objective':'binary:logistic',
                    'eval_metric':'auc',
@@ -23,112 +24,102 @@ def train_final_model(params, X, y):
                   })
     params['max_leaves'] = int(params['max_leaves'])
     params['max_bin'] = int(params['max_bin'])
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.25, random_state=9999)
-    X_test, X_valid, y_test, y_valid = train_test_split(X_valid, y_valid, test_size=0.5, random_state=9999)
-    dtrain = xgboost.DMatrix(X_train, y_train)
-    dvalid = xgboost.DMatrix(X_valid, y_valid)
-    del X_train, X_valid, y_train
-    model = xgboost.train(params, dtrain, 1024, evals=[(dvalid, 'eval')], early_stopping_rounds=16)
+    dtrain = xgboost.DMatrix(train.drop([outcome], axis=1), train[outcome])
+    dvalid = xgboost.DMatrix(valid.drop([outcome], axis=1), valid[outcome])
+    del train, valid
+    model = xgboost.train(params, dtrain, 2048, evals=[(dvalid, 'eval')], early_stopping_rounds=16)
     return model
 
-def plot_metrics(model, y_test, y_pred, model_name):
-    my_dpi = 96
-    xgboost.plot_importance(model,
-                            max_num_features=16,
-                            importance_type='weight',
-                            show_values=False,
-                            xlabel='Number of Splits').figure.savefig(model_name + '_weight_VI.png', dpi=my_dpi)
-    xgboost.plot_importance(model,
-                            max_num_features=16,
-                            importance_type='gain',
-                            show_values=False,
-                            xlabel='Average Gini Gain per Split').figure.savefig(model_name + '_gain_VI.png', dpi=my_dpi)
-    fpr, tpr, _ = sklearn.metrics.roc_curve(y_test, y_pred)
+def format_ci(metric, metric_pm):
+    return '{:.5f}'.format(metric) + '±' + '{:.5f}'.format(metric_pm)
+
+def compute_intervals(y_test, y_pred, model_name):
+    n_obs = len(y_test)
+    alpha = .05
+    norm_coef = norm.ppf(1-(alpha/2))
     auroc = sklearn.metrics.roc_auc_score(y_test, y_pred)
+    auroc_pm = norm_coef*(auroc*(1-auroc)/n_obs)**0.5
+    auroc_ci = format_ci(auroc, auroc_pm)
     aupr = sklearn.metrics.average_precision_score(y_test, y_pred)
-    logloss = sklearn.metrics.log_loss(y_test, y_pred)
+    aupr_pm = norm_coef*(aupr*(1-aupr)/n_obs)**0.5
+    aupr_ci = format_ci(aupr, aupr_pm)
+    logloss = sklearn.metrics.log_loss(y_test, y_pred) 
+    logloss_pm = norm_coef*np.std(np.add(np.multiply(y_test, np.log(y_pred)), np.multiply(np.subtract(1,y_test), np.log(np.subtract(1,y_pred)))))/(n_obs**0.5)
+    logloss_ci = format_ci(logloss, logloss_pm)
     brier = sklearn.metrics.brier_score_loss(y_test, y_pred)
-    plt.figure(figsize=(400/my_dpi, 400/my_dpi), dpi=my_dpi)
-    plt.step(fpr, tpr, color='b', alpha=0.2,
-             where='post')
-    plt.fill_between(fpr, tpr, step='post', alpha=0.2,
-                     color='b')
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.ylim([0.0, 1.0])
-    plt.xlim([0.0, 1.0])
-    plt.title('ROC Curve for ' + model_name + ': AUC = {0:0.4f}'.format(auroc))
-    plt.savefig(model_name + '_ROC.png', dpi=my_dpi)
-    
-    precision, recall, _ = sklearn.metrics.precision_recall_curve(y_test, y_pred)
-    plt.figure(figsize=(400/my_dpi, 400/my_dpi), dpi=my_dpi)
-    plt.step(precision, recall, color='b', alpha=0.2,
-             where='post')
-    plt.fill_between(precision, recall, step='post', alpha=0.2,
-                     color='b')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.0])
-    plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve for ' + model_name + ': AUC = {0:0.4f}'.format(aupr))
-    plt.savefig(model_name + '_PR.png', dpi=my_dpi)
-    return {'model_name':model_name, 'auroc':auroc, 'aupr':aupr, 'logloss':logloss, 'brier':brier}
+    brier_pm = norm_coef*np.std(np.subtract(y_test, y_pred)**2)/(n_obs**0.5)
+    brier_ci = format_ci(brier, brier_pm)
+    return {'model_name':model_name, 'auroc':auroc_ci, 'aupr':aupr_ci, 'logloss':logloss_ci, 'brier':brier_ci}
 
-df_2015 = pickle.load(open("df_2015.p", "rb"))
-df_2016 = pickle.load(open("df_2016.p", "rb"))
+def get_metrics(model_name, train, valid, test, outcome='ilive'):
+    best_model_params = pickle.load(open(model_name + ' Hyperparameters.p', 'rb'))
+    best_model = train_final_model(best_model_params,
+                                   train,
+                                   valid,
+                                   outcome=outcome)
+    pred = best_model.predict(xgboost.DMatrix(train.drop([outcome], axis=1), train[outcome]),
+                              ntree_limit=best_model.best_ntree_limit)
+    qtiles = np.percentile(pred, np.linspace(0, 100, 10000))
+    with open(model_name + ' Quantiles.p', 'wb') as file:
+        pickle.dump(qtiles, file, protocol=pickle.HIGHEST_PROTOCOL)
+    del pred
+    metrics_dict = compute_intervals(test[outcome],
+                                     best_model.predict(xgboost.DMatrix(test.drop([outcome], axis=1), test[outcome]),
+                                                        ntree_limit=best_model.best_ntree_limit),
+                                     model_name)
+    feature_gains = best_model.get_score(importance_type='gain')
+    gain_sum = sum(feature_gains.values())
+    feature_weights = best_model.get_score(importance_type='weight')
+    weight_sum = sum(feature_weights.values())
+    top_5_features = sorted(feature_gains, key=feature_gains.get, reverse=True)[0:5]
+    top_5_gains = [feature_gains[k]/gain_sum for k in top_5_features]
+    top_5_weights = [feature_weights[k]/weight_sum for k in top_5_features]
+    feature_data = top_5_features + top_5_gains + top_5_weights
+    feature_data_headers = ['Feature {} Name'.format(i) for i in range(1, 6)] + \
+                           ['Feature {} Gain'.format(i) for i in range(1, 6)] + \
+                           ['Feature {} Weight'.format(i) for i in range(1, 6)]
+    metrics_dict.update(dict(zip(feature_data_headers, feature_data)))
+    with open(model_name + ' Model.p', 'wb') as file:
+        pickle.dump(best_model, file, protocol=pickle.HIGHEST_PROTOCOL)
+    return metrics_dict
+
+pd.set_option('display.max_columns', None)
+pd.set_option('precision', 5)
+        
+df_2016_train = pickle.load(open('Full 2016 Training Set.p', 'rb'))
+df_2016_valid = pickle.load(open('Full 2016 Validation Set.p', 'rb'))
+df_2015 = pickle.load(open('Full 2015.p', 'rb'))
+results_table = pd.DataFrame()
+
+results_table = results_table.append(get_metrics('Postnatal',
+                                                 df_2016_train,
+                                                 df_2016_valid,
+                                                 df_2015),
+                                     ignore_index=True)
+
 df_varlist = pd.read_csv('Neonatal Mortality Predictor List.csv')
-pre_birth_vars = df_varlist[df_varlist['pre_birth']==1]['feature'].tolist()
+prenatal_vars = df_varlist[df_varlist['prenatal']==1]['feature'].tolist()
 del df_varlist
+df_2016_train = df_2016_train[prenatal_vars]
+df_2016_valid = df_2016_valid[prenatal_vars]
+df_2015 = df_2015[prenatal_vars]
+results_table = results_table.append(get_metrics('Prenatal',
+                                                 df_2016_train,
+                                                 df_2016_valid,
+                                                 df_2015),
+                                     ignore_index=True)
+del df_2016_train, df_2016_valid, df_2015, prenatal_vars
 
-best_NICU = pickle.load(open("NICU_best_params.p", "rb"))
-NICU_model = train_final_model(best_NICU,
-                         df_2016[df_2016['ab_nicu']==2].drop(['ilive', 'ab_nicu'], axis=1),
-                         df_2016[df_2016['ab_nicu']==2]['ilive'])
-plot_metrics(NICU_model,
-             df_2015[df_2015['ab_nicu']==2]['ilive'],
-             NICU_model.predict(xgboost.DMatrix(df_2015[df_2015['ab_nicu']==2].drop(['ilive', 'ab_nicu'], axis=1),
-                                                df_2015[df_2015['ab_nicu']==2]['ilive']),
-                                ntree_limit=NICU_model.best_ntree_limit),
-             'NICU')
-del NICU_model
+df_2016_NICU_train = pickle.load(open('NICU 2016 Training Set.p', 'rb'))
+df_2016_NICU_valid = pickle.load(open('NICU 2016 Validation Set.p', 'rb'))
+df_2015_NICU = pickle.load(open('NICU 2015.p', 'rb'))
+results_table = results_table.append(get_metrics('NICU',
+                                                 df_2016_NICU_train,
+                                                 df_2016_NICU_valid,
+                                                 df_2015_NICU),
+                                     ignore_index=True)
+del df_2016_NICU_train, df_2016_NICU_valid, df_2015_NICU
 
-best_pre_birth = pickle.load(open("pre_birth_best_params.p", "rb"))
-pre_birth_model = train_final_model(best_pre_birth,
-                              df_2016[pre_birth_vars],
-                              df_2016['ilive'])
-pre_birth_pred = pre_birth_model.predict(xgboost.DMatrix(df_2016[pre_birth_vars],
-                                                          df_2016['ilive']),
-                                         ntree_limit=pre_birth_model.best_ntree_limit)
-pre_birth_qtiles = np.percentile(pre_birth_pred, np.linspace(0, 100, 10000))
-with open('pre_birth_qtiles.p', 'wb') as file:
-    pickle.dump(pre_birth_qtiles, file, protocol=pickle.HIGHEST_PROTOCOL)
-del pre_birth_pred
-plot_metrics(pre_birth_model,
-             df_2015['ilive'],
-             pre_birth_model.predict(xgboost.DMatrix(df_2015[pre_birth_vars],
-                                                     df_2015['ilive']),
-                                     ntree_limit=pre_birth_model.best_ntree_limit),
-             'pre_birth')
-with open('pre_birth_model.p', 'wb') as file:
-    pickle.dump(pre_birth_model, file, protocol=pickle.HIGHEST_PROTOCOL)
-del pre_birth_model
-
-best_post_birth = pickle.load(open("post_birth_best_params.p", "rb"))
-post_birth_model = train_final_model(best_post_birth,
-                               df_2016.drop(['ilive', 'ab_nicu'], axis=1),
-                               df_2016['ilive'])
-del df_2016
-y_test = df_2015['ilive']
-d_X = xgboost.DMatrix(df_2015.drop(['ilive', 'ab_nicu'], axis=1),
-                      y_test)
-del df_2015
-y_pred = post_birth_model.predict(d_X,
-                                  ntree_limit=post_birth_model.best_ntree_limit)
-del d_X
-plot_metrics(post_birth_model,
-             y_test,
-             y_pred,
-             'post_birth')
-del post_birth_model
+print(results_table)
     
 print('Run time: ' + str(time() - start_time) + ' seconds')

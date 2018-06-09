@@ -14,22 +14,24 @@ import xgboost
 
 os.chdir(os.path.dirname(__file__))
 
-cat_ranks = pickle.load(open("cat_ranks.p", "rb"))
+cat_ranks = pickle.load(open("Full 2016 Target Mean Encodings.p", "rb"))
 
-pre_birth_model = pickle.load(open("pre_birth_model.p", "rb"))
-pre_birth_qtiles = pickle.load(open("pre_birth_qtiles.p", "rb"))
+prenatal_model = pickle.load(open("Prenatal Model.p", "rb"))
+prenatal_qtiles = pickle.load(open("Prenatal Quantiles.p", "rb"))
 
 df_varlist = pd.read_csv('Neonatal Mortality Predictor List.csv')
-pre_birth_vars = df_varlist[df_varlist['pre_birth']==1]['feature'].tolist()
+prenatal_vars = df_varlist[df_varlist['prenatal']==1]['feature'].tolist()
+prenatal_vars.remove('ilive')
 del df_varlist
 
 app = dash.Dash()
 
 app.layout = html.Div(children=[
-    html.H1(children='Pre-Birth Neonatal Mortality Predictor'),
+    html.H1(children='Prenatal Predictor of Neonatal Mortality'),
              
     html.Label('Mother\'s Age'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': str(i), 'value': i} for i in range(12, 51)],
         value = 'missing',
         id='mager'
@@ -37,6 +39,7 @@ app.layout = html.Div(children=[
              
     html.Label('Mother\'s Height in Inches'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(30, 78)],
         value = 'missing',
@@ -45,6 +48,7 @@ app.layout = html.Div(children=[
              
     html.Label('Mother\'s Birthplace'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 3}] + \
                 [
             {'label': 'In the 50 U.S. states', 'value': 1},
@@ -69,6 +73,7 @@ app.layout = html.Div(children=[
              
     html.Label('Mother\'s Hispanic Origin'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': 'Non-hispanic', 'value': 0},
             {'label': 'Mexican', 'value': 1},
@@ -84,6 +89,7 @@ app.layout = html.Div(children=[
              
     html.Label('Mother\'s Education'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': '8th Grade or Less', 'value': 1},
             {'label': '9th through 12th grade with no diploma', 'value': 2},
@@ -110,6 +116,7 @@ app.layout = html.Div(children=[
              
     html.Label('Paternity Acknowledged'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': 'Yes', 'value': 'Y'},
             {'label': 'No', 'value': 'N'},
@@ -122,6 +129,7 @@ app.layout = html.Div(children=[
              
     html.Label('Father\'s Age'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(9, 99)],
         value = 'missing',
@@ -130,6 +138,7 @@ app.layout = html.Div(children=[
              
     html.Label('Father\'s Education'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': '8th Grade or Less', 'value': 1},
             {'label': '9th through 12th grade with no diploma', 'value': 2},
@@ -161,6 +170,7 @@ app.layout = html.Div(children=[
              
     html.Label('Father\'s Hispanic Origin'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': 'Non-hispanic', 'value': 0},
             {'label': 'Mexican', 'value': 1},
@@ -178,6 +188,7 @@ app.layout = html.Div(children=[
             
     html.Label('Mother\'s Cigarettes Smoked per Day Before Pregnancy:'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(0, 99)],
         value = 'missing',
@@ -185,6 +196,7 @@ app.layout = html.Div(children=[
     ),
     html.Label('Mother\'s Cigarettes Smoked per Day During 1st Trimester:'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(0, 99)],
         value = 'missing',
@@ -192,6 +204,7 @@ app.layout = html.Div(children=[
     ),
     html.Label('Mother\'s Cigarettes Smoked per Day During 2nd Trimester:'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(0, 99)],
         value = 'missing',
@@ -199,6 +212,7 @@ app.layout = html.Div(children=[
     ),
     html.Label('Mother\'s Cigarettes Smoked per Day During 3rd Trimester:'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(0, 99)],
         value = 'missing',
@@ -218,6 +232,7 @@ app.layout = html.Div(children=[
              
     html.Label('Mother\'s Pre-pregnancy Weight (lbs)'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(75, 375)],
         value = 'missing',
@@ -226,6 +241,7 @@ app.layout = html.Div(children=[
              
     html.Label('Mother\'s Weight at Delivery (lbs)'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(100, 400)],
         value = 'missing',
@@ -234,6 +250,7 @@ app.layout = html.Div(children=[
              
     html.Label('Month of Pregnancy Prenatal Care Began'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [
             {'label': 'No Prenatal Care', 'value': 0},
@@ -254,6 +271,7 @@ app.layout = html.Div(children=[
              
     html.Label('Number of Prenatal Visits'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(0, 99)],
         value = 'missing',
@@ -262,6 +280,7 @@ app.layout = html.Div(children=[
              
     html.Label('Prior Births Now Living'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(31)],
         value = 'missing',
@@ -270,6 +289,7 @@ app.layout = html.Div(children=[
              
     html.Label('Prior Births Now Dead'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(31)],
         value = 'missing',
@@ -278,6 +298,7 @@ app.layout = html.Div(children=[
              
     html.Label('Prior Other Terminations'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown or Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(31)],
         value = 'missing',
@@ -286,6 +307,7 @@ app.layout = html.Div(children=[
              
     html.Label('Months Since Last Live Birth'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown, Not Stated, or Not Applicable', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(301)],
         value = 'missing',
@@ -294,6 +316,7 @@ app.layout = html.Div(children=[
              
     html.Label('Months Since Last Other Pregnancy'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown, Not Stated, or Not Applicable', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(301)],
         value = 'missing',
@@ -302,6 +325,7 @@ app.layout = html.Div(children=[
              
     html.Label('Gestation Duration Based on Last Normal Menses (Weeks)'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Unknown', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(17, 48)],
         value = 'missing',
@@ -310,6 +334,7 @@ app.layout = html.Div(children=[
              
     html.Label('Gestation Duration Based on Obstetric Estimate (Weeks)'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': 'Not Stated', 'value': 'missing'}] + \
                 [{'label': str(i), 'value': i} for i in range(17, 48)],
         value = 'missing',
@@ -320,13 +345,16 @@ app.layout = html.Div(children=[
              
     html.Label('Expected Number of Births'),
     dcc.Dropdown(
-        options=[{'label': str(i), 'value': i} for i in range(1, 6)],
+        clearable=False,
+        options=[{'label': str(i), 'value': i} for i in range(1, 5)] + \
+                [{'label': '5 or more', 'value': 5}],
         value = 'missing',
         id='dplural'
     ),
              
     html.Label('Infant Sex'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': 'Male', 'value': 'M'},
             {'label': 'Female', 'value': 'F'}
@@ -351,6 +379,7 @@ app.layout = html.Div(children=[
              
     html.Label('Number of Previous Cesareans'),
     dcc.Dropdown(
+        clearable=False,
         options=[{'label': str(i), 'value': i} for i in range(31)],
         value = 'missing',
         id='rf_cesarn'
@@ -386,6 +415,7 @@ app.layout = html.Div(children=[
              
     html.Label('Birth Month'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': 'January', 'value': 1},
             {'label': 'February', 'value': 2},
@@ -406,6 +436,7 @@ app.layout = html.Div(children=[
              
     html.Label('Payment Source for Delivery'),
     dcc.Dropdown(
+        clearable=False,
         options=[
             {'label': 'Medicaid', 'value': 1},
             {'label': 'Private Insurance', 'value': 2},
@@ -420,7 +451,7 @@ app.layout = html.Div(children=[
         id='pay'
     ),
     
-    html.Div(id='output', children='No output yet'),
+    dcc.Markdown(id='output', children='No output yet'),
     
     html.Button('Predict', id='button'),
     
@@ -590,12 +621,35 @@ def compute(n_clicks, sex, mbstate_rec, wic, dmar, cig_0, cig_1, cig_2, cig_3,
     'ilp_r':[min(illb_r, ilop_r) if 'missing' not in [illb_r, ilop_r] else 'missing'],
     'pwgt_r':[pwgt_r],
     'dwgt_r':[dwgt_r],
-    'setorder_r':[1],
+    'setorder_r':[cat_map('setorder_r', 1)],
     })
     df = df.replace('missing', np.nan)
-    prediction = pre_birth_model.predict(xgboost.DMatrix(df[pre_birth_vars]), ntree_limit=pre_birth_model.best_ntree_limit)
-    percentile = bisect.bisect_left(pre_birth_qtiles, prediction) / 10000.0
-    pred_message = 'A child born with these characteristics has a {0:.2%} predicted probability of surviving through hospital discharge, better than {1:.2%} of births based on 2016 data.'.format(1-prediction[0], 1-percentile)
+    prediction = prenatal_model.predict(xgboost.DMatrix(df[prenatal_vars]), ntree_limit=prenatal_model.best_ntree_limit)
+    percentile = bisect.bisect_left(prenatal_qtiles, prediction) / 10000.0
+    sex_pronoun = {'M':'his',
+                   'F':'her',
+                   'missing':'its'}[sex]
+    pred_message = 'A child born with these characteristics has a {0:.2%} predicted probability of surviving through completion of '.format(1-prediction[0]) + sex_pronoun + ' standard certificate of live birth, better than {0:.2%} of births based on 2016 data.'.format(1-percentile)
+    if dplural in range(2, 6):
+        pred_message = pred_message.replace('A child born', 'A child born first')
+        num_order_to_word = {1:'first', 2:'second', 3:'third', 4:'fourth', 5:'fifth', 6:'sixth'}
+        plural_predictions = {}
+        plural_predictions[1] = prediction
+        num_listed_children = 1
+        for i in range(2, dplural+1):
+            df['setorder_r'] = [cat_map('dplural', i)]
+            plural_predictions[i] = prenatal_model.predict(xgboost.DMatrix(df[prenatal_vars]), ntree_limit=prenatal_model.best_ntree_limit)
+            if np.round(plural_predictions[i], 3) == np.round(plural_predictions[i-1], 3):
+                num_listed_children += 1
+                pred_message = pred_message.replace(num_order_to_word[i-1], num_order_to_word[i-1] + ' or ' + num_order_to_word[i])
+                if num_listed_children == 3:
+                    pred_message = pred_message.replace(num_order_to_word[i-2] + ' or ' + num_order_to_word[i-1], num_order_to_word[i-2] + ', ' + num_order_to_word[i-1] + ',')
+                elif num_listed_children > 3:
+                    pred_message = pred_message.replace(num_order_to_word[i-2] + ', or ' + num_order_to_word[i-1], num_order_to_word[i-2] + ', ' + num_order_to_word[i-1] + ',')
+            else:
+                percentile = bisect.bisect_left(prenatal_qtiles, plural_predictions[i][0]) / 10000.0
+                pred_message = pred_message + '\n\nA child born ' + num_order_to_word[i] + ' with these characteristics has a {0:.2%} predicted probability of surviving through completion of '.format(1-plural_predictions[i][0]) + sex_pronoun + ' standard certificate of live birth, better than {0:.2%} of births based on 2016 data.'.format(1-percentile)
+                num_listed_children = 1
     return pred_message
 
 if __name__ == '__main__':
