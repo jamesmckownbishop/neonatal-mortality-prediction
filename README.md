@@ -2,9 +2,9 @@
 
 This project uses public births data to predict neonatal mortality. The scripts are all written for Python 3.6. To replicate the project results, download the scripts to a single folder and run them in the following order on a system with at least 16GB RAM (run times reported on Intel i7-6700 with 16GB RAM):
 
-```Neonatal Mortality Data Preparation.py``` downloads, cleans, and pickles the data; 7.8 minutes
+```Neonatal Mortality Data Preparation.py``` downloads, cleans, and pickles the data; 7.7 minutes
 
-```Neonatal Mortality Data Analysis.py``` runs XGBoost with validation and hyperoptimization using 2016 data; 546 minutes
+```Neonatal Mortality Data Analysis.py``` runs XGBoost with validation and hyperoptimization using 2016 data; 545.7 minutes
 
 ```Neonatal Mortality Final Test.py``` runs and describes the results of the hyperoptimized models using 2015 data; 4.2 minutes
 
