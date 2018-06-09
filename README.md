@@ -16,8 +16,6 @@ This project uses public births data to predict neonatal mortality. The scripts 
 
 ```Prenatal Model.p``` and ```Prenatal Quantiles.p``` are necessary input files for the predictor app that store the prenatal prediction model and its predicted mortality probability quantiles on the training set, respectively
 
- are necessary input fril
-
 The data analysis and final test scripts require Python packages ```hyperopt``` (which itself requires ```msgpack```) and ```xgboost```; the predictor app script requires ```dash```
 
 ## Detailed Instructions
