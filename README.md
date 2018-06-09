@@ -1,6 +1,6 @@
 # Neonatal Mortality Prediction
 
-This project uses public births data to predict neonatal mortality. The scripts are all written for Python 3.6. Download the scripts to a single folder and run them in the following order on a system with at least 16GB RAM (run times reported on Intel i7-6700 with 16GB RAM):
+This project uses public births data to predict neonatal mortality. The scripts are all written for Python 3.6. To replicate the project results, download the scripts to a single folder and run them in the following order on a system with at least 16GB RAM (run times reported on Intel i7-6700 with 16GB RAM):
 
 ```Neonatal Mortality Data Preparation.py``` downloads, cleans, and pickles the data; 7.8 minutes
 
@@ -12,7 +12,11 @@ This project uses public births data to predict neonatal mortality. The scripts 
 
 ```Neonatal Mortality Predictor List.csv``` is a necessary input file for the latter three scripts that lists the predictors used, their data types, and whether they are included in the prenatal model
 
-```prenatal_model.p``` and ```prenatal_qtiles.p``` are necessary input files for the predictor app that store the prenatal prediction model and its predicted mortality probability quantiles on the training set, respectively
+```Full 2016 Target Mean Encodings``` is a necessary input file for the predictor app that stores the target mean encodings for features treated as categorical
+
+```Prenatal Model.p``` and ```Prenatal Quantiles.p``` are necessary input files for the predictor app that store the prenatal prediction model and its predicted mortality probability quantiles on the training set, respectively
+
+ are necessary input fril
 
 The data analysis and final test scripts require Python packages ```hyperopt``` (which itself requires ```msgpack```) and ```xgboost```; the predictor app script requires ```dash```
 
